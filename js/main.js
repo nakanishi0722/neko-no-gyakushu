@@ -43,12 +43,13 @@
     if (eager) i.setAttribute('fetchpriority', 'high'); else i.loading = 'lazy';
     i.decoding = 'async';
     i.alt = alt || '';
-    // メニュー・お知らせの写真（.ph-natural）は切り抜かずに全体を見せる。
-    // 枠を写真と同じ形にし、高さに収まらない分は同じ写真をぼかして埋める。
+    // メニュー・お知らせの写真は切り抜かずに全体を見せる。
+    //  .ph-natural … 枠を写真と同じ形にする
+    //  .ph-fit     … 決まった形の枠に全体を収め、余白は同じ写真をぼかして埋める
     i.addEventListener('load', () => {
-      const box = i.closest('.ph-natural');
+      const box = i.closest('.ph-natural, .ph-fit');
       if (!box || !i.naturalWidth) return;
-      box.style.aspectRatio = i.naturalWidth + ' / ' + i.naturalHeight;
+      if (box.classList.contains('ph-natural')) box.style.aspectRatio = i.naturalWidth + ' / ' + i.naturalHeight;
       box.style.setProperty('--ph-bg', 'url("' + i.src.replace(/"/g, '%22') + '")');
       box.classList.add('has-img');
       // タップで写真を大きく表示（リンクの中にある写真は除く）
@@ -64,7 +65,7 @@
     // ファイル名の間違いなどで読み込めないときは、写真を外して猫のシルエットに戻す
     i.addEventListener('error', () => {
       console.warn('[捨て猫の逆襲] 写真が見つかりません: ' + src);
-      const box = i.closest('.ph-natural');
+      const box = i.closest('.ph-natural, .ph-fit');
       if (box) { box.classList.remove('has-img'); box.style.aspectRatio = ''; }
       i.remove();
     });
@@ -135,16 +136,20 @@
   const CAST = list('CAST');
   const castTop = document.querySelector('[data-render="cast-top"]');
   if (castTop) {
-    const all = (CAST || []).filter(c => c && c.name);
-    let picks = all.filter(c => c.top);
-    if (!picks.length) picks = all.slice(0, 2);
+    // TOPにはリストの上から8人まで（名前・英字名・ひとこと自己PR）
+    const picks = (CAST || []).filter(c => c && c.name).slice(0, 8);
     if (!picks.length) castTop.appendChild(empty('キャストは近日公開します。最新情報は', '公式X', X_URL));
-    picks.forEach(c => {
+    picks.forEach((c, i) => {
       const a = el('article', 'cast reveal');
       const ph = el('div', 'cast-photo');
+      ph.appendChild(el('span', 'ci-no', String(i + 1).padStart(2, '0'))).setAttribute('aria-hidden', 'true');
       ph.appendChild(photoBox(c.photo, c.name));
       a.appendChild(ph);
-      a.appendChild(castBody(c, 'cast-body', 'h3'));
+      const b = el('div', 'cast-body');
+      b.appendChild(el('h3', 'cast-name', c.name));
+      if (c.en) b.appendChild(el('p', 'cast-en', c.en));
+      if (lines(c.quote).length) b.appendChild(putLines(el('p', 'cast-quote'), c.quote));
+      a.appendChild(b);
       castTop.appendChild(a);
     });
   }
@@ -182,6 +187,30 @@
     if (n.tag) m.appendChild(el('span', 'tag', n.tag));
     return m;
   };
+  // 写真のないお知らせ：猫のマーク・爪痕・タグ名で、サイトの雰囲気に合わせた絵を入れる
+  const newsMark = n => {
+    const box = el('div', 'ph-mark');
+    box.setAttribute('aria-hidden', 'true');
+    const claws = document.createElementNS(SVGNS, 'svg');
+    claws.setAttribute('class', 'claws');
+    claws.setAttribute('viewBox', '0 0 100 125');
+    claws.setAttribute('preserveAspectRatio', 'none');
+    ['M58 8 Q70 60 92 118', 'M68 4 Q80 55 100 108', 'M78 2 Q88 48 104 96'].forEach(d => {
+      const p = document.createElementNS(SVGNS, 'path');
+      p.setAttribute('d', d);
+      claws.appendChild(p);
+    });
+    box.appendChild(claws);
+    const cat = document.createElementNS(SVGNS, 'svg');
+    cat.setAttribute('class', 'cat');
+    cat.setAttribute('viewBox', '0 0 24 24');
+    const u = document.createElementNS(SVGNS, 'use');
+    u.setAttribute('href', '#cat');
+    cat.appendChild(u);
+    box.appendChild(cat);
+    box.appendChild(el('span', 'label', n.tag || 'News'));
+    return box;
+  };
   const paragraphs = (node, v) => { lines(v).forEach(s => node.appendChild(el('p', '', s))); return node; };
   const newsLink = n => {
     if (!n.link || !n.link.url) return null;
@@ -195,38 +224,18 @@
   const newsTop = document.querySelector('[data-render="news-top"]');
   if (newsTop) {
     if (!NEWS.length) newsTop.appendChild(empty('お知らせはまだありません。'));
-    const [first, ...rest] = NEWS;
-    if (first) {
-      const a = el('a', 'news-feature reveal');
-      a.href = 'news.html#' + first.id;
-      const ph = el('div', 'ph plain ph-natural');
-      const inner = el('div', 'ph-in');
-      if (first.photo) inner.appendChild(img(first.photo, first.title));
-      ph.appendChild(inner);
+    NEWS.slice(0, 3).forEach(n => {
+      const a = el('a', 'news-card reveal');
+      a.href = 'news.html#' + n.id;
+      const ph = el('div', 'ph plain ph-fit');
+      if (n.photo) ph.appendChild(img(n.photo, n.title)); else ph.appendChild(newsMark(n));
       a.appendChild(ph);
-      a.appendChild(meta(first));
+      a.appendChild(meta(n));
       const h = el('h3');
-      h.appendChild(el('span', 'u', first.title));
+      h.appendChild(el('span', 'u', n.title));
       a.appendChild(h);
-      const t = lines(first.text);
-      if (t.length) a.appendChild(el('p', '', t[0]));
       newsTop.appendChild(a);
-    }
-    if (rest.length) {
-      const ul = el('ul', 'news-list reveal');
-      rest.slice(0, 3).forEach(n => {
-        const li = el('li');
-        const a = el('a');
-        a.href = 'news.html#' + n.id;
-        a.appendChild(meta(n));
-        const h = el('h3');
-        h.appendChild(el('span', 'u', n.title));
-        a.appendChild(h);
-        li.appendChild(a);
-        ul.appendChild(li);
-      });
-      newsTop.appendChild(ul);
-    }
+    });
   }
 
   const newsAll = document.querySelector('[data-render="news-all"]');
@@ -281,32 +290,28 @@
     if (it.text) d.appendChild(el('p', '', it.text));
     return d;
   };
+  // TOPのMenu：写真の横に出す料金（data/menu.js の MENU_TOP）
   const menuTop = document.querySelector('[data-render="menu-top"]');
-  if (menuTop) {
-    let cats = MENU.filter(c => c.top);
-    if (!cats.length) cats = MENU.slice(0, 2);
-    cats.forEach(c => {
-      const box = el('div', 'menu-cat reveal');
-      const h = el('h3', '', c.en || c.jp);
-      if (c.en && c.jp) { h.appendChild(document.createTextNode(' ')); h.appendChild(el('small', '', c.jp)); }
-      box.appendChild(h);
-      c.items.filter(it => it && it.name).slice(0, c.topCount || 3).forEach(it => box.appendChild(item(it, 'h4')));
-      menuTop.appendChild(box);
-    });
+  const MT = window.MENU_TOP;
+  if (menuTop && MT && Array.isArray(MT.items)) {
+    const box = el('div', 'menu-cat');
+    const h = el('h3', '', MT.en || MT.title);
+    if (MT.en && MT.title) { h.appendChild(document.createTextNode(' ')); h.appendChild(el('small', '', MT.title)); }
+    box.appendChild(h);
+    MT.items.filter(it => it && it.name).forEach(it => box.appendChild(item(it, 'h4')));
+    if (MT.note) box.appendChild(el('p', 'note', MT.note));
+    menuTop.appendChild(box);
   }
   const menuAll = document.querySelector('[data-render="menu-all"]');
   if (menuAll) {
     if (!MENU.length) menuAll.appendChild(empty('メニューは準備中です。'));
     MENU.forEach(c => {
-      const row = el('div', 'grid12 mn-cat reveal');
-      const head = el('div', 'mn-head');
-      head.appendChild(el('h2', '', c.en || c.jp));
-      if (c.en && c.jp) head.appendChild(el('p', '', c.jp));
-      row.appendChild(head);
-      const items = el('div', 'mn-items');
-      c.items.filter(it => it && it.name).forEach(it => items.appendChild(item(it, 'h3')));
-      row.appendChild(items);
-      menuAll.appendChild(row);
+      const box = el('div', 'mn-cat reveal');
+      const h = el('h2', '', c.en || c.jp);
+      if (c.en && c.jp) { h.appendChild(document.createTextNode(' ')); h.appendChild(el('small', '', c.jp)); }
+      box.appendChild(h);
+      c.items.filter(it => it && it.name).forEach(it => box.appendChild(item(it, 'h3')));
+      menuAll.appendChild(box);
     });
   }
 

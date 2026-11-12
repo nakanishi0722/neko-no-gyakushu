@@ -1,10 +1,9 @@
 /* =========================================================
    メニュー
-   ・ここを書き換えると「メニューページ」と「TOPのMenu」が変わります。
+   ・ここを書き換えると「メニューページ」が変わります。TOPの Menu に出す料金は、このファイルの一番下の MENU_TOP です。
    ・カテゴリ（Signature、Food など）ごとに品目を並べます。
    ・price は数字で書くと「¥1,200」の形で表示されます（例: 1200）。
      「¥600〜」のように書きたいときは "¥600〜" と文字で書きます。
-   ・top: true のカテゴリがTOPページに載ります（各カテゴリの上から3品）。
    ・text（説明）は不要なら "" のままで大丈夫です。
    ・1品分は { から }, まで。コピーして増やせます。最後の , を消さないでください。
 
@@ -12,7 +11,7 @@
    ========================================================= */
 window.MENU = [
   {
-    en: "Signature", jp: "看板ドリンク", top: true,
+    en: "Signature", jp: "看板ドリンク",
     items: [
       { name: "傷跡のロゼ", en: "Scar Rosé", price: 1200, text: "ロゼに木苺のシロップを一筋。グラスの縁に、猫の爪痕を描きます。" },
       { name: "月蝕ソーダ", en: "Eclipse Soda", price: 1000, text: "ブラックベリーと炭のソーダ。注ぐと、底から赤い月が昇ります。" },
@@ -21,7 +20,7 @@ window.MENU = [
     ],
   },
   {
-    en: "Drink", jp: "ドリンク", top: false,
+    en: "Drink", jp: "ドリンク",
     items: [
       { name: "夜明け前の紅茶", en: "Before Dawn Tea", price: 700, text: "ホット／アイス" },
       { name: "黒猫ブレンド", en: "Black Cat Blend Coffee", price: 700, text: "ホット／アイス" },
@@ -29,7 +28,7 @@ window.MENU = [
     ],
   },
   {
-    en: "Food", jp: "フード", top: true,
+    en: "Food", jp: "フード",
     items: [
       { name: "黒猫オムライス", en: "Black Cat Omelette Rice", price: 1500, text: "担当キャストがケチャップで絵を描きます。" },
       { name: "逆襲のブラックカレー", en: "Revenge Curry", price: 1300, text: "" },
@@ -38,7 +37,7 @@ window.MENU = [
     ],
   },
   {
-    en: "Dessert", jp: "デザート", top: false,
+    en: "Dessert", jp: "デザート",
     items: [
       { name: "薔薇と十字架のパフェ", en: "Rose & Cross Parfait", price: 1400, text: "" },
       { name: "爪痕のガトーショコラ", en: "Claw Mark Gâteau", price: 900, text: "粉糖で、三本の爪痕を。" },
@@ -46,7 +45,7 @@ window.MENU = [
     ],
   },
   {
-    en: "Cheki", jp: "チェキ・オリジナル", top: true,
+    en: "Cheki", jp: "チェキ・オリジナル",
     items: [
       { name: "キャストとチェキ", en: "Cheki with Cast", price: 1000, text: "落書き・デコレーション付き。" },
       { name: "キャストのソロチェキ", en: "Solo Cheki", price: 800, text: "" },
@@ -54,3 +53,18 @@ window.MENU = [
     ],
   },
 ];
+
+/* =========================================================
+   TOPページの「Menu」で、写真の横に出す料金
+   ・price は数字で書くと「¥1,200」、文字で書くとそのまま表示されます（例: "¥800〜"）。
+   ・note（小さな注意書き）は不要なら "" にします。
+   ========================================================= */
+window.MENU_TOP = {
+  title: "1時間飲み放題",
+  en: "Free Flow",
+  items: [
+    { name: "アルコール", en: "Alcohol", price: 2500, text: "" },
+    { name: "ソフトドリンク", en: "Soft Drinks", price: 2000, text: "" },
+  ],
+  note: "料金は1時間あたりです。",
+};
